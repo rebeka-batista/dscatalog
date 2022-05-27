@@ -10,7 +10,6 @@ import com.devsuperior.dscatalog.tests.Factory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,9 +57,9 @@ public class ProductServiceTestes {
         productDto = Factory.createProductDto();
         page = new PageImpl<>(List.of(product));
 
-        when(repository.findAll((Pageable) ArgumentMatchers.any())).thenReturn(page);
+        when(repository.findAll((Pageable) any())).thenReturn(page);
 
-        when(repository.save(ArgumentMatchers.any())).thenReturn(product);
+        when(repository.save(any())).thenReturn(product);
 
         when(repository.findById(existingId)).thenReturn(Optional.of(product));
         when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
