@@ -2,6 +2,7 @@ package com.devsuperior.dscatalog.resources;
 
 import com.devsuperior.dscatalog.dto.ProductDto;
 import com.devsuperior.dscatalog.tests.Factory;
+import com.devsuperior.dscatalog.tests.TokenUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,15 +30,22 @@ public class ProductResourceIT {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TokenUtil tokenUtil;
+
     private Long existingId;
     private Long nonExistingId;
     private Long countTotalProducts;
+    private String username;
+    private String password;
 
     @BeforeEach
     void setUp() throws Exception {
         existingId = 1L;
         nonExistingId = 1000L;
         countTotalProducts = 25L;
+        username = "maria@gmail.com";
+        password = "123456";
     }
 
     @Test
@@ -56,14 +64,15 @@ public class ProductResourceIT {
 
     @Test
     public void updateShouldReturnProductDTOWhenIdExists() throws Exception {
-        ProductDto productDto = Factory.createProductDto();
-        String jsonBody = objectMapper.writeValueAsString(productDto);
-
-        String expectedName = productDto.getName();
-        String expectedDescription = productDto.getDescription();
+        String accessToken = tokenUtil.obtainAccessToken(mockMvc, username, password);
+        ProductDto productDTO = Factory.createProductDto();
+        String jsonBody = objectMapper.writeValueAsString(productDTO);
+        String expectedName = productDTO.getName();
+        String expectedDescription = productDTO.getDescription();
 
         ResultActions result =
                 mockMvc.perform(put("/products/{id}", existingId)
+                        .header("Authorization", "Bearer " + accessToken)
                         .content(jsonBody)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON));
@@ -76,11 +85,13 @@ public class ProductResourceIT {
 
     @Test
     public void updateShouldReturnNotFoundWhenIdDoesNotExist() throws Exception {
-        ProductDto productDto = Factory.createProductDto();
-        String jsonBody = objectMapper.writeValueAsString(productDto);
+        String accessToken = tokenUtil.obtainAccessToken(mockMvc, username, password);
+        ProductDto productDTO = Factory.createProductDto();
+        String jsonBody = objectMapper.writeValueAsString(productDTO);
 
         ResultActions result =
                 mockMvc.perform(put("/products/{id}", nonExistingId)
+                        .header("Authorization", "Bearer " + accessToken)
                         .content(jsonBody)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON));

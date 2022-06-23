@@ -7,11 +7,13 @@ import com.devsuperior.dscatalog.repositories.CategoryRepository;
 import com.devsuperior.dscatalog.repositories.ProductRepository;
 import com.devsuperior.dscatalog.service.exceptions.ResourceNotFoundException;
 import com.devsuperior.dscatalog.tests.Factory;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
@@ -57,12 +59,12 @@ public class ProductServiceTestes {
         productDto = Factory.createProductDto();
         page = new PageImpl<>(List.of(product));
 
-        when(repository.findAll((Pageable) any())).thenReturn(page);
-
         when(repository.save(any())).thenReturn(product);
 
+        Mockito.when(repository.find(any(), any(), any())).thenReturn(page);
         when(repository.findById(existingId)).thenReturn(Optional.of(product));
         when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
+        when(repository.findAll((Pageable) any())).thenReturn(page);
 
         when(repository.getOne(existingId)).thenReturn(product);
         when(repository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
@@ -77,10 +79,9 @@ public class ProductServiceTestes {
 
     @Test
     public void findAllPagedShouldReturnPage() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<ProductDto> result = service.findAllPaged(pageable);
-        assertNotNull(result);
-        verify(repository).findAll(pageable);
+        Pageable pageable = PageRequest.of(0, 12);
+        Page<ProductDto> result = service.findAllPaged(0L, "", pageable);
+        Assertions.assertNotNull(result);
     }
 
     @Test
