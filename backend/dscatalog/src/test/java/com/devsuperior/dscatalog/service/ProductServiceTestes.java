@@ -60,25 +60,17 @@ public class ProductServiceTestes {
         page = new PageImpl<>(List.of(product));
 
         when(repository.save(any())).thenReturn(product);
-
-        Mockito.when(repository.find(any(), any(), any())).thenReturn(page);
-        when(repository.findById(existingId)).thenReturn(Optional.of(product));
-        when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
-        when(repository.findAll((Pageable) any())).thenReturn(page);
-
-        when(repository.getOne(existingId)).thenReturn(product);
-        when(repository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
-
-        when(categoryRepository.getOne(existingId)).thenReturn(category);
-        when(categoryRepository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
-
-        doNothing().when(repository).deleteById(existingId);
-        doThrow(EmptyResultDataAccessException.class).when(repository).deleteById(nonExistingId);
-        doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
     }
 
     @Test
     public void findAllPagedShouldReturnPage() {
+        when(repository.findAll((Pageable) any())).thenReturn(page);
+        when(categoryRepository.getOne(existingId)).thenReturn(category);
+
+        Mockito.when(repository.find(any(), any(), any())).thenReturn(page);
+        when(repository.findById(existingId)).thenReturn(Optional.of(product));
+        when(categoryRepository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
+
         Pageable pageable = PageRequest.of(0, 12);
         Page<ProductDto> result = service.findAllPaged(0L, "", pageable);
         Assertions.assertNotNull(result);
@@ -86,41 +78,54 @@ public class ProductServiceTestes {
 
     @Test
     public void findByIdShouldReturnProductDtoWhenIdExists() {
+        Mockito.when(repository.find(any(), any(), any())).thenReturn(page);
+        when(repository.findById(existingId)).thenReturn(Optional.of(product));
+        when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
+
         ProductDto result = service.findById(existingId);
         assertNotNull(result);
     }
 
     @Test
     public void findByIdShouldReturnResourceNotFoundExceptionWhenIdDoesNotExists() {
+        Mockito.when(repository.find(any(), any(), any())).thenReturn(page);
+        when(repository.findById(existingId)).thenReturn(Optional.of(product));
+        when(repository.findById(nonExistingId)).thenReturn(Optional.empty());
+
         assertThrows(ResourceNotFoundException.class, () -> service.findById(nonExistingId));
         verify(repository).findById(nonExistingId);
     }
 
     @Test
     public void updateShouldReturnProductDtoWhenIdExists() {
+        when(repository.getOne(existingId)).thenReturn(product);
         ProductDto result = service.update(existingId, productDto);
         assertNotNull(result);
     }
 
     @Test
     public void updateShouldReturnResourceNotFoundExceptionWhenIdDoesNotExists() {
+        when(repository.getOne(nonExistingId)).thenThrow(EntityNotFoundException.class);
         assertThrows(ResourceNotFoundException.class, () -> service.update(nonExistingId, productDto));
     }
 
     @Test
     public void deleteShouldDoNothingWhenIdExists() {
+        doNothing().when(repository).deleteById(existingId);
         assertDoesNotThrow(() -> service.delete(existingId));
         verify(repository, times(1)).deleteById(existingId);
     }
 
     @Test
     public void deleteShouldThrowResourceNotFoundExceptionWhenIdDoesNotExists() {
+        doThrow(EmptyResultDataAccessException.class).when(repository).deleteById(nonExistingId);
         assertThrows(ResourceNotFoundException.class, () -> service.delete(nonExistingId));
         verify(repository, times(1)).deleteById(nonExistingId);
     }
 
     @Test
     public void deleteShouldThrowDataIntegrityViolationExceptionWhenDependentIt() {
+        doThrow(DataIntegrityViolationException.class).when(repository).deleteById(dependentId);
         assertThrows(DataIntegrityViolationException.class, () -> service.delete(dependentId));
         verify(repository, times(1)).deleteById(dependentId);
     }
